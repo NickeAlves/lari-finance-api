@@ -1,0 +1,19 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:lari_finance;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+
+app:
+  security:
+    jwt:
+      secret: test-only-change-this-secret-with-at-least-32-bytes
+      expiration: 86400000
+  cors:
+    allowed-origins: http://localhost:4200
