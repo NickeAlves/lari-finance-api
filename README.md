@@ -1,96 +1,96 @@
 # lari-finance-api
 
-API Java/Spring Boot para uma pagina tipo planilha de registro de entradas do trabalho de manicure.
+Java/Spring Boot API for a spreadsheet-style page to record income entries from manicure work.
 
-Nao existe gateway de pagamento, cobranca online ou processamento de transacoes. A API apenas registra entradas informadas manualmente, calcula os valores automaticos e entrega relatorios/exportacoes.
+There is no payment gateway, online billing, or transaction processing. The API only records manually submitted entries, calculates automatic values, and delivers reports/exports.
 
 ## Stack
 
 - Java 21
 - Spring Boot 4
-- Spring Security com JWT (jjwt 0.12.6)
+- Spring Security with JWT (jjwt 0.12.6)
 - PostgreSQL 17
-- Flyway (migrations de banco)
-- Apache POI 5 (exportação Excel)
-- OpenPDF 2 (exportação PDF)
-- SpringDoc OpenAPI 3 (Swagger UI, habilitado via `SPRINGDOC_ENABLED`)
-- Spring Boot Actuator (healthcheck em `/actuator/health`)
-- H2 (banco em memória, somente nos testes)
+- Flyway (database migrations)
+- Apache POI 5 (Excel export)
+- OpenPDF 2 (PDF export)
+- SpringDoc OpenAPI 3 (Swagger UI, enabled via `SPRINGDOC_ENABLED`)
+- Spring Boot Actuator (healthcheck at `/actuator/health`)
+- H2 (in-memory database, tests only)
 - Docker / Docker Compose
 
-## Arquitetura
+## Architecture
 
-Arquitetura hexagonal com três camadas:
+Hexagonal architecture with three layers:
 
 ```
-domain/         → modelos de negócio e interfaces (portas)
-application/    → serviços de caso de uso e DTOs internos
-infrastructure/ → controllers REST, persistência JPA, segurança JWT, exportações
+domain/         → business models and interfaces (ports)
+application/    → use case services and internal DTOs
+infrastructure/ → REST controllers, JPA persistence, JWT security, exports
 ```
 
-## Ambiente
+## Environment
 
-Crie um `.env` local a partir de `.env.example`. O arquivo `.env` fica ignorado pelo Git.
+Create a local `.env` from `.env.example`. The `.env` file is ignored by Git.
 
 ```bash
 cp .env.example .env
-# Edite o .env e preencha DATABASE_*, POSTGRES_DB e JWT_SECRET.
+# Edit .env and fill in DATABASE_*, POSTGRES_DB and JWT_SECRET.
 docker compose up -d
 ./mvnw spring-boot:run
 ```
 
-Use um `JWT_SECRET` forte, com pelo menos 32 bytes, antes de publicar qualquer ambiente real.
-O `docker-compose.yml` reutiliza `DATABASE_USERNAME` e `DATABASE_PASSWORD` para criar o usuario local do PostgreSQL; mantenha essas variaveis iguais ao `DATABASE_URL`.
+Use a strong `JWT_SECRET`, at least 32 bytes, before publishing any real environment.
+The `docker-compose.yml` reuses `DATABASE_USERNAME` and `DATABASE_PASSWORD` to create the local PostgreSQL user; keep those variables matching `DATABASE_URL`.
 
-## Deploy no Railway
+## Deploy on Railway
 
-O projeto ja inclui `railway.json` com build Maven, start command e healthcheck em `/actuator/health`.
+The project already includes `railway.json` with Maven build, start command, and healthcheck at `/actuator/health`.
 
-Infra recomendada no Railway:
+Recommended Railway setup:
 
-1. Crie um Project no Railway.
-2. Adicione um banco: `+ New` -> `Database` -> `PostgreSQL`.
-3. Adicione a API via GitHub repo ou `railway up`.
-4. Na API, configure as variaveis:
+1. Create a Project in Railway.
+2. Add a database: `+ New` -> `Database` -> `PostgreSQL`.
+3. Add the API via GitHub repo or `railway up`.
+4. In the API service, set the variables:
 
 ```text
 DATABASE_URL=jdbc:postgresql://${{Postgres.PGHOST}}:${{Postgres.PGPORT}}/${{Postgres.PGDATABASE}}
 DATABASE_USERNAME=${{Postgres.PGUSER}}
 DATABASE_PASSWORD=${{Postgres.PGPASSWORD}}
-JWT_SECRET=<gere um segredo forte, minimo 32 bytes>
-CORS_ALLOWED_ORIGINS=https://seu-front-end
+JWT_SECRET=<generate a strong secret, minimum 32 bytes>
+CORS_ALLOWED_ORIGINS=https://your-front-end
 REGISTRATION_ENABLED=false
 SPRINGDOC_ENABLED=false
 JWT_EXPIRATION=86400000
 ```
 
-Para criar a primeira conta, publique temporariamente com `REGISTRATION_ENABLED=true`, registre a usuaria dona, e volte para `REGISTRATION_ENABLED=false`.
+To create the first account, temporarily deploy with `REGISTRATION_ENABLED=true`, register the owner user, then set it back to `REGISTRATION_ENABLED=false`.
 
-O Railway injeta `PORT` automaticamente; a API usa esse valor em producao.
+Railway injects `PORT` automatically; the API uses that value in production.
 
-## Endpoints principais
+## Main endpoints
 
-- `POST /api/auth/register`: cria conta e retorna token.
-- `POST /api/auth/login`: autentica e retorna token.
-- `GET /api/entries?from=2026-06-01&to=2026-06-30`: lista as linhas da planilha.
-- `POST /api/entries`: cria uma entrada manual.
-- `PUT /api/entries/{id}`: altera uma linha.
-- `DELETE /api/entries/{id}`: remove uma linha.
-- `GET /api/entries/payment-methods`: lista formas de pagamento.
-- `GET /api/calendar?year=2026&month=6`: totais por dia para calendario.
-- `GET /api/reports/summary?from=2026-06-01&to=2026-06-30`: resumo por periodo.
-- `GET /api/exports/income-entries.xlsx?from=2026-06-01&to=2026-06-30`: exporta Excel.
-- `GET /api/exports/income-entries.pdf?from=2026-06-01&to=2026-06-30`: exporta PDF.
+- `POST /api/auth/register`: creates an account and returns a token.
+- `POST /api/auth/login`: authenticates and returns a token.
+- `GET /api/entries?from=2026-06-01&to=2026-06-30`: lists the spreadsheet rows.
+- `POST /api/entries`: creates a manual entry.
+- `PUT /api/entries/{id}`: updates a row.
+- `DELETE /api/entries/{id}`: removes a row.
+- `GET /api/entries/payment-methods`: lists payment methods.
+- `GET /api/calendar?year=2026&month=6`: daily totals for the calendar view.
+- `GET /api/reports/summary?from=2026-06-01&to=2026-06-30`: period summary.
+- `GET /api/exports/income-entries.xlsx?from=2026-06-01&to=2026-06-30`: Excel export.
+- `GET /api/exports/income-entries.pdf?from=2026-06-01&to=2026-06-30`: PDF export.
 
-Todos os endpoints, exceto login/cadastro e healthcheck, exigem:
+All endpoints except login/register and healthcheck require:
 
 ```http
 Authorization: Bearer <token>
 ```
 
-## Campos da linha
+## Entry fields
 
-Entrada manual:
+Manual entry:
 
 ```json
 {
@@ -102,16 +102,16 @@ Entrada manual:
 }
 ```
 
-Campos calculados pela API:
+Fields calculated by the API:
 
 - IVA: 21%
 - Gastos fijos: 20%
 - Productos: 8%
 - Salario: 41%
 - Reserva impuesto anual: 10%
-- Total del dia: soma das entradas do dia
+- Total del dia: sum of the day's entries
 
-Exemplo de resposta:
+Example response:
 
 ```json
 {
@@ -133,7 +133,7 @@ Exemplo de resposta:
 }
 ```
 
-## Formas de pagamento
+## Payment methods
 
 - `EFECTIVO`
 - `TARJETA`
@@ -141,9 +141,9 @@ Exemplo de resposta:
 - `TRANSFERENCIA`
 - `OTRO`
 
-## Verificacao
+## Tests
 
-Os testes usam H2 em memória — não é necessário ter o PostgreSQL rodando.
+Tests use H2 in-memory — no PostgreSQL instance needed.
 
 ```bash
 ./mvnw test
