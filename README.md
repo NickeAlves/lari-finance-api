@@ -8,12 +8,25 @@ Nao existe gateway de pagamento, cobranca online ou processamento de transacoes.
 
 - Java 21
 - Spring Boot 4
-- Spring Security com JWT
-- PostgreSQL
-- Flyway
-- Apache POI para Excel
-- OpenPDF para PDF
-- Arquitetura hexagonal: `domain`, `application`, `infrastructure`
+- Spring Security com JWT (jjwt 0.12.6)
+- PostgreSQL 17
+- Flyway (migrations de banco)
+- Apache POI 5 (exportação Excel)
+- OpenPDF 2 (exportação PDF)
+- SpringDoc OpenAPI 3 (Swagger UI, habilitado via `SPRINGDOC_ENABLED`)
+- Spring Boot Actuator (healthcheck em `/actuator/health`)
+- H2 (banco em memória, somente nos testes)
+- Docker / Docker Compose
+
+## Arquitetura
+
+Arquitetura hexagonal com três camadas:
+
+```
+domain/         → modelos de negócio e interfaces (portas)
+application/    → serviços de caso de uso e DTOs internos
+infrastructure/ → controllers REST, persistência JPA, segurança JWT, exportações
+```
 
 ## Ambiente
 
@@ -98,6 +111,28 @@ Campos calculados pela API:
 - Reserva impuesto anual: 10%
 - Total del dia: soma das entradas do dia
 
+Exemplo de resposta:
+
+```json
+{
+  "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+  "date": "2026-06-21",
+  "clientName": "Maria",
+  "amount": 45.00,
+  "paymentMethod": "TARJETA",
+  "paymentMethodLabel": "Tarjeta",
+  "vatAmount": 9.45,
+  "fixedExpensesAmount": 9.00,
+  "productsAmount": 3.60,
+  "salaryAmount": 18.45,
+  "annualTaxReserveAmount": 4.50,
+  "dailyTotal": 45.00,
+  "notes": "Manicura completa",
+  "createdAt": "2026-06-21T10:30:00Z",
+  "updatedAt": "2026-06-21T10:30:00Z"
+}
+```
+
 ## Formas de pagamento
 
 - `EFECTIVO`
@@ -107,6 +142,8 @@ Campos calculados pela API:
 - `OTRO`
 
 ## Verificacao
+
+Os testes usam H2 em memória — não é necessário ter o PostgreSQL rodando.
 
 ```bash
 ./mvnw test
