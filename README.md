@@ -70,19 +70,46 @@ Railway injects `PORT` automatically; the API uses that value in production.
 
 ## Main endpoints
 
+### Auth
+
 - `POST /api/auth/register`: creates an account and returns a token.
 - `POST /api/auth/login`: authenticates and returns a token.
-- `GET /api/entries?from=2026-06-01&to=2026-06-30`: lists the spreadsheet rows.
+
+### Entries
+
+- `GET /api/entries`: lists entries (paginated, see query params below).
 - `POST /api/entries`: creates a manual entry.
 - `PUT /api/entries/{id}`: updates a row.
 - `DELETE /api/entries/{id}`: removes a row.
-- `GET /api/entries/payment-methods`: lists payment methods.
+- `GET /api/entries/payment-methods`: lists available payment methods.
+
+Query params for `GET /api/entries`:
+
+| Param     | Default | Description                                      |
+|-----------|---------|--------------------------------------------------|
+| `from`    | —       | Start date (ISO 8601, e.g. `2026-06-01`)         |
+| `to`      | —       | End date (ISO 8601, e.g. `2026-06-30`)           |
+| `page`    | `0`     | Zero-based page number                           |
+| `size`    | `20`    | Page size                                        |
+| `sortBy`  | `date`  | Field to sort by (`date`, `amount`, `clientName`)|
+| `sortDir` | `asc`   | Sort direction (`asc` or `desc`)                 |
+
+### Reports & calendar
+
 - `GET /api/calendar?year=2026&month=6`: daily totals for the calendar view.
 - `GET /api/reports/summary?from=2026-06-01&to=2026-06-30`: period summary.
+
+### Exports
+
 - `GET /api/exports/income-entries.xlsx?from=2026-06-01&to=2026-06-30`: Excel export.
 - `GET /api/exports/income-entries.pdf?from=2026-06-01&to=2026-06-30`: PDF export.
 
-All endpoints except login/register and healthcheck require:
+### Finance utilities (public)
+
+- `GET /api/finance/rates`: returns the current allocation rates (VAT, fixed expenses, products, salary, annual tax reserve).
+- `POST /api/finance/calculate`: calculates the breakdown for a given amount without saving an entry.
+
+All endpoints except login/register, healthcheck, and `/api/finance/*` require:
 
 ```http
 Authorization: Bearer <token>
@@ -111,27 +138,41 @@ Fields calculated by the API:
 - Reserva impuesto anual: 10%
 - Total del dia: sum of the day's entries
 
-Example response:
+`GET /api/entries` returns a paginated response:
 
 ```json
 {
-  "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-  "date": "2026-06-21",
-  "clientName": "Maria",
-  "amount": 45.00,
-  "paymentMethod": "TARJETA",
-  "paymentMethodLabel": "Tarjeta",
-  "vatAmount": 9.45,
-  "fixedExpensesAmount": 9.00,
-  "productsAmount": 3.60,
-  "salaryAmount": 18.45,
-  "annualTaxReserveAmount": 4.50,
-  "dailyTotal": 45.00,
-  "notes": "Manicura completa",
-  "createdAt": "2026-06-21T10:30:00Z",
-  "updatedAt": "2026-06-21T10:30:00Z"
+  "content": [
+    {
+      "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+      "date": "2026-06-21",
+      "clientName": "Maria",
+      "amount": 45.00,
+      "paymentMethod": "TARJETA",
+      "paymentMethodLabel": "Tarjeta",
+      "vatAmount": 9.45,
+      "fixedExpensesAmount": 9.00,
+      "productsAmount": 3.60,
+      "salaryAmount": 18.45,
+      "annualTaxReserveAmount": 4.50,
+      "dailyTotal": 45.00,
+      "notes": "Manicura completa",
+      "createdAt": "2026-06-21T10:30:00Z",
+      "updatedAt": "2026-06-21T10:30:00Z"
+    }
+  ],
+  "metadata": {
+    "totalElements": 42,
+    "totalPages": 3,
+    "page": 0,
+    "size": 20,
+    "first": true,
+    "last": false
+  }
 }
 ```
+
+`POST /api/entries` and `PUT /api/entries/{id}` return the entry object directly (without the `content`/`metadata` wrapper).
 
 ## Payment methods
 
