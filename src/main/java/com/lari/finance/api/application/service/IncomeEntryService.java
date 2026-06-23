@@ -1,7 +1,9 @@
 package com.lari.finance.api.application.service;
 
 import com.lari.finance.api.application.dto.IncomeEntryCommand;
+import com.lari.finance.api.application.dto.IncomeEntryPage;
 import com.lari.finance.api.application.dto.IncomeEntryWithDailyTotal;
+import com.lari.finance.api.application.exception.BusinessException;
 import com.lari.finance.api.application.exception.NotFoundException;
 import com.lari.finance.api.domain.model.IncomeEntry;
 import com.lari.finance.api.domain.model.UserAccount;
@@ -13,11 +15,14 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
 public class IncomeEntryService {
+    private static final Set<String> ALLOWED_SORT_FIELDS = Set.of("date", "clientName", "amount", "createdAt");
+
     private final IncomeEntryRepository incomeEntryRepository;
     private final CurrentUserService currentUserService;
 
@@ -60,12 +65,27 @@ public class IncomeEntryService {
     }
 
     @Transactional(readOnly = true)
-    public List<IncomeEntryWithDailyTotal> list(String userEmail, LocalDate from, LocalDate to) {
+    public IncomeEntryPage list(String userEmail, LocalDate from, LocalDate to, int page, int size, String sortBy, String sortDir) {
+        if (page < 0) throw new BusinessException("O número da página não pode ser negativo.");
+        if (size < 1 || size > 100) throw new BusinessException("O tamanho da página deve estar entre 1 e 100.");
+        if (!ALLOWED_SORT_FIELDS.contains(sortBy))
+            throw new BusinessException("Campo de ordenação inválido: " + sortBy + ". Valores aceitos: " + ALLOWED_SORT_FIELDS);
+        if (!sortDir.equalsIgnoreCase("asc") && !sortDir.equalsIgnoreCase("desc"))
+            throw new BusinessException("Direção de ordenação inválida: " + sortDir + ". Use 'asc' ou 'desc'.");
+
+        UserAccount user = currentUserService.getByEmail(userEmail);
+        DateRange range = DateRange.of(from, to);
+        return incomeEntryRepository.findPage(user.id(), range.from(), range.to(), page, size, sortBy, sortDir);
+    }
+
+    @Transactional(readOnly = true)
+    public List<IncomeEntryWithDailyTotal> listAll(String userEmail, LocalDate from, LocalDate to) {
         UserAccount user = currentUserService.getByEmail(userEmail);
         DateRange range = DateRange.of(from, to);
         List<IncomeEntry> entries = incomeEntryRepository.findByUserIdAndDateBetween(user.id(), range.from(), range.to());
         Map<LocalDate, BigDecimal> totalsByDay = entries.stream()
-            .collect(Collectors.groupingBy(IncomeEntry::date, Collectors.reducing(BigDecimal.ZERO, IncomeEntry::amount, BigDecimal::add)));
+            .collect(Collectors.groupingBy(IncomeEntry::date,
+                Collectors.reducing(BigDecimal.ZERO, IncomeEntry::amount, BigDecimal::add)));
         return entries.stream()
             .map(entry -> new IncomeEntryWithDailyTotal(entry, totalsByDay.getOrDefault(entry.date(), BigDecimal.ZERO)))
             .toList();

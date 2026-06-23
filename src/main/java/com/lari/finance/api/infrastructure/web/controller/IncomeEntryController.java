@@ -1,9 +1,11 @@
 package com.lari.finance.api.infrastructure.web.controller;
 
+import com.lari.finance.api.application.dto.IncomeEntryPage;
 import com.lari.finance.api.application.service.IncomeEntryService;
 import com.lari.finance.api.domain.model.PaymentMethod;
 import com.lari.finance.api.infrastructure.web.dto.IncomeEntryRequest;
 import com.lari.finance.api.infrastructure.web.dto.IncomeEntryResponse;
+import com.lari.finance.api.infrastructure.web.dto.PagedResponse;
 import com.lari.finance.api.infrastructure.web.dto.PaymentMethodResponse;
 import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -35,15 +37,18 @@ public class IncomeEntryController {
     }
 
     @GetMapping
-    public List<IncomeEntryResponse> list(
+    public PagedResponse<IncomeEntryResponse> list(
         Authentication authentication,
         @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
-        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
+        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "20") int size,
+        @RequestParam(defaultValue = "date") String sortBy,
+        @RequestParam(defaultValue = "asc") String sortDir
     ) {
-        return incomeEntryService.list(authentication.getName(), from, to)
-            .stream()
-            .map(IncomeEntryResponse::from)
-            .toList();
+        IncomeEntryPage result = incomeEntryService.list(authentication.getName(), from, to, page, size, sortBy, sortDir);
+        List<IncomeEntryResponse> content = result.content().stream().map(IncomeEntryResponse::from).toList();
+        return PagedResponse.of(content, result.totalElements(), result.totalPages(), result.page(), result.size());
     }
 
     @PostMapping

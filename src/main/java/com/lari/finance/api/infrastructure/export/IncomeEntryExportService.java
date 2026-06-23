@@ -43,7 +43,7 @@ public class IncomeEntryExportService {
     }
 
     public byte[] excel(String userEmail, LocalDate from, LocalDate to) throws IOException {
-        List<IncomeEntryWithDailyTotal> rows = incomeEntryService.list(userEmail, from, to);
+        List<IncomeEntryWithDailyTotal> rows = incomeEntryService.listAll(userEmail, from, to);
         ReportSummary summary = reportService.summarize(userEmail, from, to);
 
         try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
@@ -65,7 +65,7 @@ public class IncomeEntryExportService {
     }
 
     public byte[] pdf(String userEmail, LocalDate from, LocalDate to) {
-        List<IncomeEntryWithDailyTotal> rows = incomeEntryService.list(userEmail, from, to);
+        List<IncomeEntryWithDailyTotal> rows = incomeEntryService.listAll(userEmail, from, to);
         ReportSummary summary = reportService.summarize(userEmail, from, to);
 
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
