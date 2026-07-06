@@ -18,9 +18,10 @@ public record IncomeEntryRequest(
     @NotNull PaymentMethod paymentMethod,
     @Size(max = 500) String notes,
     boolean changeGiven,
-    PaymentMethod changeMethod
+    PaymentMethod changeMethod,
+    BigDecimal changeAmount
 ) {
     public IncomeEntryCommand toCommand() {
-        return new IncomeEntryCommand(date, clientName, amount, paymentMethod, notes, changeGiven, changeMethod);
+        return new IncomeEntryCommand(date, clientName, amount, paymentMethod, notes, changeGiven, changeMethod, changeAmount);
     }
 }

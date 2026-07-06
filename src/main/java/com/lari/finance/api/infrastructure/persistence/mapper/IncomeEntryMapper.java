@@ -26,6 +26,7 @@ public final class IncomeEntryMapper {
             entity.getNotes(),
             entity.isChangeGiven(),
             entity.getChangeMethod(),
+            entity.getChangeAmount(),
             entity.getCreatedAt(),
             entity.getUpdatedAt()
         );
@@ -47,6 +48,7 @@ public final class IncomeEntryMapper {
             entry.notes(),
             entry.changeGiven(),
             entry.changeMethod(),
+            entry.changeAmount(),
             entry.createdAt(),
             entry.updatedAt()
         );

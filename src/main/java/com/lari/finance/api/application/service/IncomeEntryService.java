@@ -42,7 +42,8 @@ public class IncomeEntryService {
             command.paymentMethod(),
             command.notes(),
             command.changeGiven(),
-            command.changeMethod()
+            command.changeMethod(),
+            command.changeAmount()
         );
         IncomeEntry saved = incomeEntryRepository.save(entry);
         return withDailyTotal(saved);
@@ -60,7 +61,8 @@ public class IncomeEntryService {
             command.paymentMethod(),
             command.notes(),
             command.changeGiven(),
-            command.changeMethod()
+            command.changeMethod(),
+            command.changeAmount()
         );
         IncomeEntry saved = incomeEntryRepository.save(entry);
         return withDailyTotal(saved);

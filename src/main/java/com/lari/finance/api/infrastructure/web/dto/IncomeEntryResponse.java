@@ -25,6 +25,7 @@ public record IncomeEntryResponse(
     boolean changeGiven,
     String changeMethod,
     String changeMethodLabel,
+    BigDecimal changeAmount,
     Instant createdAt,
     Instant updatedAt
 ) {
@@ -47,6 +48,7 @@ public record IncomeEntryResponse(
             entry.changeGiven(),
             entry.changeMethod() == null ? null : entry.changeMethod().name(),
             entry.changeMethod() == null ? null : entry.changeMethod().label(),
+            entry.changeAmount(),
             entry.createdAt(),
             entry.updatedAt()
         );

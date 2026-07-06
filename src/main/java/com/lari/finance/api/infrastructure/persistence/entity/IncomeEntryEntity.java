@@ -60,6 +60,9 @@ public class IncomeEntryEntity {
     @Column(name = "change_method", length = 40)
     private PaymentMethod changeMethod;
 
+    @Column(name = "change_amount", precision = 12, scale = 2)
+    private BigDecimal changeAmount;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
@@ -84,6 +87,7 @@ public class IncomeEntryEntity {
         String notes,
         boolean changeGiven,
         PaymentMethod changeMethod,
+        BigDecimal changeAmount,
         Instant createdAt,
         Instant updatedAt
     ) {
@@ -101,6 +105,7 @@ public class IncomeEntryEntity {
         this.notes = notes;
         this.changeGiven = changeGiven;
         this.changeMethod = changeMethod;
+        this.changeAmount = changeAmount;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
@@ -159,6 +164,10 @@ public class IncomeEntryEntity {
 
     public PaymentMethod getChangeMethod() {
         return changeMethod;
+    }
+
+    public BigDecimal getChangeAmount() {
+        return changeAmount;
     }
 
     public Instant getCreatedAt() {

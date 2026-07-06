@@ -12,6 +12,7 @@ public record IncomeEntryCommand(
     PaymentMethod paymentMethod,
     String notes,
     boolean changeGiven,
-    PaymentMethod changeMethod
+    PaymentMethod changeMethod,
+    BigDecimal changeAmount
 ) {
 }

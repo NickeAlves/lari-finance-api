@@ -1,6 +1,7 @@
 package com.lari.finance.api.domain.model;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Objects;
@@ -17,6 +18,7 @@ public class IncomeEntry {
     private String notes;
     private boolean changeGiven;
     private PaymentMethod changeMethod;
+    private BigDecimal changeAmount;
     private final Instant createdAt;
     private Instant updatedAt;
 
@@ -31,13 +33,14 @@ public class IncomeEntry {
         String notes,
         boolean changeGiven,
         PaymentMethod changeMethod,
+        BigDecimal changeAmount,
         Instant createdAt,
         Instant updatedAt
     ) {
         this.id = Objects.requireNonNull(id, "id");
         this.userId = Objects.requireNonNull(userId, "userId");
         this.createdAt = Objects.requireNonNull(createdAt, "createdAt");
-        apply(date, clientName, amount, paymentMethod, notes, changeGiven, changeMethod);
+        apply(date, clientName, amount, paymentMethod, notes, changeGiven, changeMethod, changeAmount);
         this.breakdown = Objects.requireNonNull(breakdown, "breakdown");
         this.updatedAt = Objects.requireNonNull(updatedAt, "updatedAt");
     }
@@ -50,7 +53,8 @@ public class IncomeEntry {
         PaymentMethod paymentMethod,
         String notes,
         boolean changeGiven,
-        PaymentMethod changeMethod
+        PaymentMethod changeMethod,
+        BigDecimal changeAmount
     ) {
         Instant now = Instant.now();
         BigDecimal normalized = validateAmount(amount);
@@ -65,6 +69,7 @@ public class IncomeEntry {
             normalizeNotes(notes),
             changeGiven,
             changeMethod,
+            changeAmount,
             now,
             now
         );
@@ -77,9 +82,10 @@ public class IncomeEntry {
         PaymentMethod paymentMethod,
         String notes,
         boolean changeGiven,
-        PaymentMethod changeMethod
+        PaymentMethod changeMethod,
+        BigDecimal changeAmount
     ) {
-        apply(date, clientName, amount, paymentMethod, notes, changeGiven, changeMethod);
+        apply(date, clientName, amount, paymentMethod, notes, changeGiven, changeMethod, changeAmount);
         this.updatedAt = Instant.now();
     }
 
@@ -90,7 +96,8 @@ public class IncomeEntry {
         PaymentMethod paymentMethod,
         String notes,
         boolean changeGiven,
-        PaymentMethod changeMethod
+        PaymentMethod changeMethod,
+        BigDecimal changeAmount
     ) {
         BigDecimal normalized = validateAmount(amount);
         this.date = validateDate(date);
@@ -101,6 +108,7 @@ public class IncomeEntry {
         this.notes = normalizeNotes(notes);
         this.changeGiven = changeGiven;
         this.changeMethod = validateChangeMethod(changeGiven, changeMethod);
+        this.changeAmount = validateChangeAmount(changeGiven, changeAmount);
     }
 
     private static LocalDate validateDate(LocalDate date) {
@@ -134,6 +142,16 @@ public class IncomeEntry {
             throw new IllegalArgumentException("Selecciona cómo se dio el cambio (Efectivo o Bizum).");
         }
         return changeMethod;
+    }
+
+    private static BigDecimal validateChangeAmount(boolean changeGiven, BigDecimal changeAmount) {
+        if (!changeGiven) {
+            return null;
+        }
+        if (changeAmount == null || changeAmount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Indica el importe del cambio dado.");
+        }
+        return changeAmount.setScale(2, RoundingMode.HALF_UP);
     }
 
     public UUID id() {
@@ -174,6 +192,10 @@ public class IncomeEntry {
 
     public PaymentMethod changeMethod() {
         return changeMethod;
+    }
+
+    public BigDecimal changeAmount() {
+        return changeAmount;
     }
 
     public Instant createdAt() {
