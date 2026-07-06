@@ -24,6 +24,8 @@ public final class IncomeEntryMapper {
                 entity.getAnnualTaxReserveAmount()
             ),
             entity.getNotes(),
+            entity.isChangeGiven(),
+            entity.getChangeMethod(),
             entity.getCreatedAt(),
             entity.getUpdatedAt()
         );
@@ -43,6 +45,8 @@ public final class IncomeEntryMapper {
             entry.breakdown().salaryAmount(),
             entry.breakdown().annualTaxReserveAmount(),
             entry.notes(),
+            entry.changeGiven(),
+            entry.changeMethod(),
             entry.createdAt(),
             entry.updatedAt()
         );

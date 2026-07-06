@@ -15,6 +15,8 @@ public class IncomeEntry {
     private PaymentMethod paymentMethod;
     private MoneyBreakdown breakdown;
     private String notes;
+    private boolean changeGiven;
+    private PaymentMethod changeMethod;
     private final Instant createdAt;
     private Instant updatedAt;
 
@@ -27,13 +29,15 @@ public class IncomeEntry {
         PaymentMethod paymentMethod,
         MoneyBreakdown breakdown,
         String notes,
+        boolean changeGiven,
+        PaymentMethod changeMethod,
         Instant createdAt,
         Instant updatedAt
     ) {
         this.id = Objects.requireNonNull(id, "id");
         this.userId = Objects.requireNonNull(userId, "userId");
         this.createdAt = Objects.requireNonNull(createdAt, "createdAt");
-        apply(date, clientName, amount, paymentMethod, notes);
+        apply(date, clientName, amount, paymentMethod, notes, changeGiven, changeMethod);
         this.breakdown = Objects.requireNonNull(breakdown, "breakdown");
         this.updatedAt = Objects.requireNonNull(updatedAt, "updatedAt");
     }
@@ -44,7 +48,9 @@ public class IncomeEntry {
         String clientName,
         BigDecimal amount,
         PaymentMethod paymentMethod,
-        String notes
+        String notes,
+        boolean changeGiven,
+        PaymentMethod changeMethod
     ) {
         Instant now = Instant.now();
         BigDecimal normalized = validateAmount(amount);
@@ -57,17 +63,35 @@ public class IncomeEntry {
             Objects.requireNonNull(paymentMethod, "paymentMethod"),
             FinancialAllocationPolicy.calculate(normalized),
             normalizeNotes(notes),
+            changeGiven,
+            changeMethod,
             now,
             now
         );
     }
 
-    public void update(LocalDate date, String clientName, BigDecimal amount, PaymentMethod paymentMethod, String notes) {
-        apply(date, clientName, amount, paymentMethod, notes);
+    public void update(
+        LocalDate date,
+        String clientName,
+        BigDecimal amount,
+        PaymentMethod paymentMethod,
+        String notes,
+        boolean changeGiven,
+        PaymentMethod changeMethod
+    ) {
+        apply(date, clientName, amount, paymentMethod, notes, changeGiven, changeMethod);
         this.updatedAt = Instant.now();
     }
 
-    private void apply(LocalDate date, String clientName, BigDecimal amount, PaymentMethod paymentMethod, String notes) {
+    private void apply(
+        LocalDate date,
+        String clientName,
+        BigDecimal amount,
+        PaymentMethod paymentMethod,
+        String notes,
+        boolean changeGiven,
+        PaymentMethod changeMethod
+    ) {
         BigDecimal normalized = validateAmount(amount);
         this.date = validateDate(date);
         this.clientName = validateClientName(clientName);
@@ -75,6 +99,8 @@ public class IncomeEntry {
         this.paymentMethod = Objects.requireNonNull(paymentMethod, "paymentMethod");
         this.breakdown = FinancialAllocationPolicy.calculate(normalized);
         this.notes = normalizeNotes(notes);
+        this.changeGiven = changeGiven;
+        this.changeMethod = validateChangeMethod(changeGiven, changeMethod);
     }
 
     private static LocalDate validateDate(LocalDate date) {
@@ -98,6 +124,16 @@ public class IncomeEntry {
 
     private static String normalizeNotes(String notes) {
         return notes == null || notes.isBlank() ? null : notes.trim();
+    }
+
+    private static PaymentMethod validateChangeMethod(boolean changeGiven, PaymentMethod changeMethod) {
+        if (!changeGiven) {
+            return null;
+        }
+        if (changeMethod != PaymentMethod.EFECTIVO && changeMethod != PaymentMethod.BIZUM) {
+            throw new IllegalArgumentException("Selecciona cómo se dio el cambio (Efectivo o Bizum).");
+        }
+        return changeMethod;
     }
 
     public UUID id() {
@@ -130,6 +166,14 @@ public class IncomeEntry {
 
     public String notes() {
         return notes;
+    }
+
+    public boolean changeGiven() {
+        return changeGiven;
+    }
+
+    public PaymentMethod changeMethod() {
+        return changeMethod;
     }
 
     public Instant createdAt() {

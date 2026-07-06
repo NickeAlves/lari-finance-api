@@ -22,6 +22,9 @@ public record IncomeEntryResponse(
     BigDecimal annualTaxReserveAmount,
     BigDecimal dailyTotal,
     String notes,
+    boolean changeGiven,
+    String changeMethod,
+    String changeMethodLabel,
     Instant createdAt,
     Instant updatedAt
 ) {
@@ -41,6 +44,9 @@ public record IncomeEntryResponse(
             entry.breakdown().annualTaxReserveAmount(),
             row.dailyTotal(),
             entry.notes(),
+            entry.changeGiven(),
+            entry.changeMethod() == null ? null : entry.changeMethod().name(),
+            entry.changeMethod() == null ? null : entry.changeMethod().label(),
             entry.createdAt(),
             entry.updatedAt()
         );

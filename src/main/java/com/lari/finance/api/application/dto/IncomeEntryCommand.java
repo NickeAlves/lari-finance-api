@@ -10,6 +10,8 @@ public record IncomeEntryCommand(
     String clientName,
     BigDecimal amount,
     PaymentMethod paymentMethod,
-    String notes
+    String notes,
+    boolean changeGiven,
+    PaymentMethod changeMethod
 ) {
 }

@@ -16,9 +16,11 @@ public record IncomeEntryRequest(
     @NotBlank @Size(max = 160) String clientName,
     @NotNull @DecimalMin(value = "0.01") @Digits(integer = 10, fraction = 2) BigDecimal amount,
     @NotNull PaymentMethod paymentMethod,
-    @Size(max = 500) String notes
+    @Size(max = 500) String notes,
+    boolean changeGiven,
+    PaymentMethod changeMethod
 ) {
     public IncomeEntryCommand toCommand() {
-        return new IncomeEntryCommand(date, clientName, amount, paymentMethod, notes);
+        return new IncomeEntryCommand(date, clientName, amount, paymentMethod, notes, changeGiven, changeMethod);
     }
 }

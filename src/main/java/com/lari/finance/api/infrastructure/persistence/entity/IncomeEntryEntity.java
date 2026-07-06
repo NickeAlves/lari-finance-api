@@ -53,6 +53,13 @@ public class IncomeEntryEntity {
     @Column(length = 500)
     private String notes;
 
+    @Column(name = "change_given", nullable = false)
+    private boolean changeGiven;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "change_method", length = 40)
+    private PaymentMethod changeMethod;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
@@ -75,6 +82,8 @@ public class IncomeEntryEntity {
         BigDecimal salaryAmount,
         BigDecimal annualTaxReserveAmount,
         String notes,
+        boolean changeGiven,
+        PaymentMethod changeMethod,
         Instant createdAt,
         Instant updatedAt
     ) {
@@ -90,6 +99,8 @@ public class IncomeEntryEntity {
         this.salaryAmount = salaryAmount;
         this.annualTaxReserveAmount = annualTaxReserveAmount;
         this.notes = notes;
+        this.changeGiven = changeGiven;
+        this.changeMethod = changeMethod;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
@@ -140,6 +151,14 @@ public class IncomeEntryEntity {
 
     public String getNotes() {
         return notes;
+    }
+
+    public boolean isChangeGiven() {
+        return changeGiven;
+    }
+
+    public PaymentMethod getChangeMethod() {
+        return changeMethod;
     }
 
     public Instant getCreatedAt() {

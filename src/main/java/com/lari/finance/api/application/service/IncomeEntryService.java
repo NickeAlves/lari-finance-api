@@ -40,7 +40,9 @@ public class IncomeEntryService {
             command.clientName(),
             command.amount(),
             command.paymentMethod(),
-            command.notes()
+            command.notes(),
+            command.changeGiven(),
+            command.changeMethod()
         );
         IncomeEntry saved = incomeEntryRepository.save(entry);
         return withDailyTotal(saved);
@@ -51,7 +53,15 @@ public class IncomeEntryService {
         UserAccount user = currentUserService.getByEmail(userEmail);
         IncomeEntry entry = incomeEntryRepository.findByIdAndUserId(entryId, user.id())
             .orElseThrow(() -> new NotFoundException("Entrada no encontrada."));
-        entry.update(command.date(), command.clientName(), command.amount(), command.paymentMethod(), command.notes());
+        entry.update(
+            command.date(),
+            command.clientName(),
+            command.amount(),
+            command.paymentMethod(),
+            command.notes(),
+            command.changeGiven(),
+            command.changeMethod()
+        );
         IncomeEntry saved = incomeEntryRepository.save(entry);
         return withDailyTotal(saved);
     }
