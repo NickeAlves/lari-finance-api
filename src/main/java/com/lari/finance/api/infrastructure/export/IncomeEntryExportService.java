@@ -79,9 +79,9 @@ public class IncomeEntryExportService {
             document.add(new Paragraph("Total: " + money(summary.totalAmount()) + " | Servicios: " + summary.servicesCount()));
             document.add(new Paragraph(" "));
 
-            PdfPTable table = new PdfPTable(10);
+            PdfPTable table = new PdfPTable(13);
             table.setWidthPercentage(100);
-            table.setWidths(new float[] { 1.2f, 2.2f, 1f, 1.4f, 1f, 1f, 1f, 1f, 1f, 1.1f });
+            table.setWidths(new float[] { 1.2f, 2.2f, 1f, 1.4f, 1f, 1f, 1f, 1f, 1f, 1.1f, 0.9f, 1f, 0.9f });
             List.of(
                 "Fecha",
                 "Clienta",
@@ -92,7 +92,10 @@ public class IncomeEntryExportService {
                 "Productos 8%",
                 "Salario 41%",
                 "Impuestos 10%",
-                "Total dia"
+                "Total dia",
+                "Cambio dado",
+                "Metodo cambio",
+                "Importe cambio"
             ).forEach(header -> table.addCell(headerCell(header)));
 
             for (IncomeEntryWithDailyTotal row : rows) {
@@ -107,6 +110,9 @@ public class IncomeEntryExportService {
                 table.addCell(money(entry.breakdown().salaryAmount()));
                 table.addCell(money(entry.breakdown().annualTaxReserveAmount()));
                 table.addCell(money(row.dailyTotal()));
+                table.addCell(entry.changeGiven() ? "Si" : "No");
+                table.addCell(entry.changeGiven() ? entry.changeMethod().label() : "");
+                table.addCell(entry.changeGiven() ? money(entry.changeAmount()) : "");
             }
 
             document.add(table);
@@ -129,6 +135,9 @@ public class IncomeEntryExportService {
             "Salario (41%)",
             "Reserva impuesto anual (10%)",
             "Total del dia",
+            "Cambio dado",
+            "Metodo cambio",
+            "Importe cambio",
             "Notas"
         );
         writeHeader(sheet, headerStyle, headers);
@@ -147,7 +156,14 @@ public class IncomeEntryExportService {
             write(row, 7, entry.breakdown().salaryAmount());
             write(row, 8, entry.breakdown().annualTaxReserveAmount());
             write(row, 9, tableRow.dailyTotal());
-            write(row, 10, entry.notes());
+            write(row, 10, entry.changeGiven() ? "Si" : "No");
+            write(row, 11, entry.changeGiven() ? entry.changeMethod().label() : "");
+            if (entry.changeGiven()) {
+                write(row, 12, entry.changeAmount());
+            } else {
+                write(row, 12, "");
+            }
+            write(row, 13, entry.notes());
         }
 
         autosize(sheet, headers.size());

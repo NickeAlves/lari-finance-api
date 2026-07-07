@@ -19,6 +19,7 @@ public class IncomeEntry {
     private boolean changeGiven;
     private PaymentMethod changeMethod;
     private BigDecimal changeAmount;
+    private BigDecimal netAmount;
     private final Instant createdAt;
     private Instant updatedAt;
 
@@ -41,7 +42,9 @@ public class IncomeEntry {
         this.userId = Objects.requireNonNull(userId, "userId");
         this.createdAt = Objects.requireNonNull(createdAt, "createdAt");
         apply(date, clientName, amount, paymentMethod, notes, changeGiven, changeMethod, changeAmount);
-        this.breakdown = Objects.requireNonNull(breakdown, "breakdown");
+        if (breakdown != null) {
+            this.breakdown = breakdown;
+        }
         this.updatedAt = Objects.requireNonNull(updatedAt, "updatedAt");
     }
 
@@ -65,7 +68,7 @@ public class IncomeEntry {
             validateClientName(clientName),
             normalized,
             Objects.requireNonNull(paymentMethod, "paymentMethod"),
-            FinancialAllocationPolicy.calculate(normalized),
+            null,
             normalizeNotes(notes),
             changeGiven,
             changeMethod,
@@ -104,11 +107,12 @@ public class IncomeEntry {
         this.clientName = validateClientName(clientName);
         this.amount = normalized;
         this.paymentMethod = Objects.requireNonNull(paymentMethod, "paymentMethod");
-        this.breakdown = FinancialAllocationPolicy.calculate(normalized);
         this.notes = normalizeNotes(notes);
         this.changeGiven = changeGiven;
         this.changeMethod = validateChangeMethod(changeGiven, changeMethod);
-        this.changeAmount = validateChangeAmount(changeGiven, changeAmount);
+        this.changeAmount = validateChangeAmount(changeGiven, changeAmount, normalized);
+        this.netAmount = changeGiven ? normalized.subtract(this.changeAmount) : normalized;
+        this.breakdown = FinancialAllocationPolicy.calculate(this.netAmount);
     }
 
     private static LocalDate validateDate(LocalDate date) {
@@ -144,14 +148,18 @@ public class IncomeEntry {
         return changeMethod;
     }
 
-    private static BigDecimal validateChangeAmount(boolean changeGiven, BigDecimal changeAmount) {
+    private static BigDecimal validateChangeAmount(boolean changeGiven, BigDecimal changeAmount, BigDecimal grossAmount) {
         if (!changeGiven) {
             return null;
         }
         if (changeAmount == null || changeAmount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("Indica el importe del cambio dado.");
         }
-        return changeAmount.setScale(2, RoundingMode.HALF_UP);
+        BigDecimal normalized = changeAmount.setScale(2, RoundingMode.HALF_UP);
+        if (normalized.compareTo(grossAmount) >= 0) {
+            throw new IllegalArgumentException("El cambio dado no puede ser mayor o igual que el importe cobrado.");
+        }
+        return normalized;
     }
 
     public UUID id() {
@@ -196,6 +204,10 @@ public class IncomeEntry {
 
     public BigDecimal changeAmount() {
         return changeAmount;
+    }
+
+    public BigDecimal netAmount() {
+        return netAmount;
     }
 
     public Instant createdAt() {

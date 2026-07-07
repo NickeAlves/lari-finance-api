@@ -97,7 +97,7 @@ public class IncomeEntryService {
         List<IncomeEntry> entries = incomeEntryRepository.findByUserIdAndDateBetween(user.id(), range.from(), range.to());
         Map<LocalDate, BigDecimal> totalsByDay = entries.stream()
             .collect(Collectors.groupingBy(IncomeEntry::date,
-                Collectors.reducing(BigDecimal.ZERO, IncomeEntry::amount, BigDecimal::add)));
+                Collectors.reducing(BigDecimal.ZERO, IncomeEntry::netAmount, BigDecimal::add)));
         return entries.stream()
             .map(entry -> new IncomeEntryWithDailyTotal(entry, totalsByDay.getOrDefault(entry.date(), BigDecimal.ZERO)))
             .toList();
@@ -105,7 +105,7 @@ public class IncomeEntryService {
 
     private IncomeEntryWithDailyTotal withDailyTotal(IncomeEntry entry) {
         List<IncomeEntry> dayEntries = incomeEntryRepository.findByUserIdAndDateBetween(entry.userId(), entry.date(), entry.date());
-        BigDecimal total = dayEntries.stream().map(IncomeEntry::amount).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal total = dayEntries.stream().map(IncomeEntry::netAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
         return new IncomeEntryWithDailyTotal(entry, total);
     }
 }

@@ -35,7 +35,7 @@ public class ReportService {
         DateRange range = DateRange.of(from, to);
         List<IncomeEntry> entries = incomeEntryRepository.findByUserIdAndDateBetween(user.id(), range.from(), range.to());
 
-        BigDecimal totalAmount = sum(entries, IncomeEntry::amount);
+        BigDecimal totalAmount = sum(entries, IncomeEntry::netAmount);
         BigDecimal vatAmount = sum(entries, entry -> entry.breakdown().vatAmount());
         BigDecimal fixedExpensesAmount = sum(entries, entry -> entry.breakdown().fixedExpensesAmount());
         BigDecimal productsAmount = sum(entries, entry -> entry.breakdown().productsAmount());
@@ -51,7 +51,7 @@ public class ReportService {
                     method.name(),
                     method.label(),
                     methodEntries.size(),
-                    sum(methodEntries, IncomeEntry::amount)
+                    methodBucket(entries, methodEntries, method)
                 );
             })
             .toList();
@@ -63,7 +63,7 @@ public class ReportService {
             .map(entry -> new ReportSummary.DailySummary(
                 entry.getKey(),
                 entry.getValue().size(),
-                sum(entry.getValue(), IncomeEntry::amount)
+                sum(entry.getValue(), IncomeEntry::netAmount)
             ))
             .sorted(Comparator.comparing(ReportSummary.DailySummary::date))
             .toList();
@@ -96,9 +96,18 @@ public class ReportService {
         return yearMonth.atDay(1).datesUntil(yearMonth.atEndOfMonth().plusDays(1))
             .map(date -> {
                 List<IncomeEntry> dayEntries = byDay.getOrDefault(date, List.of());
-                return new CalendarDay(date, dayEntries.size(), sum(dayEntries, IncomeEntry::amount));
+                return new CalendarDay(date, dayEntries.size(), sum(dayEntries, IncomeEntry::netAmount));
             })
             .toList();
+    }
+
+    private static BigDecimal methodBucket(List<IncomeEntry> allEntries, List<IncomeEntry> methodEntries, PaymentMethod method) {
+        BigDecimal inflow = sum(methodEntries, IncomeEntry::amount);
+        BigDecimal outflow = allEntries.stream()
+            .filter(entry -> entry.changeGiven() && entry.changeMethod() == method)
+            .map(IncomeEntry::changeAmount)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+        return inflow.subtract(outflow);
     }
 
     public static BigDecimal sum(List<IncomeEntry> entries, MoneyExtractor extractor) {

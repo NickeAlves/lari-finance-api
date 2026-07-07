@@ -20,6 +20,8 @@ public interface JpaIncomeEntryRepository extends JpaRepository<IncomeEntryEntit
 
     Page<IncomeEntryEntity> findByUserIdAndDateBetween(UUID userId, LocalDate from, LocalDate to, Pageable pageable);
 
-    @Query("SELECT e.date as date, SUM(e.amount) as total FROM IncomeEntryEntity e WHERE e.userId = :userId AND e.date BETWEEN :from AND :to GROUP BY e.date")
+    @Query("SELECT e.date as date, "
+        + "SUM(e.amount - CASE WHEN e.changeGiven = true THEN COALESCE(e.changeAmount, 0) ELSE 0 END) as total "
+        + "FROM IncomeEntryEntity e WHERE e.userId = :userId AND e.date BETWEEN :from AND :to GROUP BY e.date")
     List<DailyTotalProjection> sumDailyTotals(@Param("userId") UUID userId, @Param("from") LocalDate from, @Param("to") LocalDate to);
 }
