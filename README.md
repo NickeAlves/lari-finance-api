@@ -10,7 +10,7 @@ There is no payment gateway, online billing, or transaction processing. The API 
 - Spring Boot 4
 - Spring Security with JWT (jjwt 0.12.6)
 - PostgreSQL 17
-- Flyway (database migrations)
+- Flyway (database migrations — applied `V*.sql` files are immutable: never edit one that has already run in any environment, fix forward with a new `V{n+1}` file)
 - Apache POI 5 (Excel export)
 - OpenPDF 2 (PDF export)
 - SpringDoc OpenAPI 3 (Swagger UI, enabled via `SPRINGDOC_ENABLED`)
