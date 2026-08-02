@@ -86,7 +86,7 @@ public class IncomeEntryService {
             throw new BusinessException("Direção de ordenação inválida: " + sortDir + ". Use 'asc' ou 'desc'.");
 
         UserAccount user = currentUserService.getByEmail(userEmail);
-        DateRange range = DateRange.of(from, to);
+        DateRange range = DateRange.unbounded(from, to);
         return incomeEntryRepository.findPage(user.id(), range.from(), range.to(), page, size, sortBy, sortDir);
     }
 

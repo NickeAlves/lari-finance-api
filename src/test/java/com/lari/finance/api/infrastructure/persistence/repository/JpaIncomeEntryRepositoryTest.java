@@ -1,5 +1,6 @@
 package com.lari.finance.api.infrastructure.persistence.repository;
 
+import com.lari.finance.api.application.service.DateRange;
 import com.lari.finance.api.domain.model.PaymentMethod;
 import com.lari.finance.api.domain.model.UserRole;
 import com.lari.finance.api.infrastructure.persistence.entity.IncomeEntryEntity;
@@ -9,6 +10,8 @@ import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -45,6 +48,23 @@ class JpaIncomeEntryRepositoryTest {
 
         assertThat(totals).hasSize(1);
         assertThat(totals.get(0).getTotal()).isEqualByComparingTo("75.00");
+    }
+
+    @Test
+    void findByUserIdAndDateBetween_withUnboundedRange_returnsEntriesFromPastMonths() {
+        UUID userId = UUID.randomUUID();
+        entityManager.persist(new UserAccountEntity(userId, "Owner", "owner-" + userId + "@example.com", "hash", UserRole.OWNER, Instant.now()));
+
+        persistEntry(userId, new BigDecimal("20.00"), PaymentMethod.EFECTIVO, false, null, null);
+        entityManager.flush();
+
+        // La entrada es de julio de 2026: la ventana "mes actual" la dejaría fuera.
+        DateRange range = DateRange.unbounded(null, null);
+        Page<IncomeEntryEntity> page = repository.findByUserIdAndDateBetween(
+            userId, range.from(), range.to(), PageRequest.of(0, 20));
+
+        assertThat(page.getTotalElements()).isEqualTo(1);
+        assertThat(page.getContent().get(0).getDate()).isEqualTo(DATE);
     }
 
     private void persistEntry(UUID userId, BigDecimal amount, PaymentMethod paymentMethod, boolean changeGiven, PaymentMethod changeMethod, BigDecimal changeAmount) {
